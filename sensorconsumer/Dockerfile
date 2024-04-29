@@ -33,4 +33,3 @@ ENTRYPOINT ["java", "-jar", "sensorconsumer.jar"]
 
 # Expose port 8081 for the application to listen on
 EXPOSE 8081
-```
