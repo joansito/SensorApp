@@ -30,8 +30,6 @@ public class SensorEventConsumer {
             repository.save(event);
             log.info("Processed and saved sensor event with ID: {}", event.getId());
         } catch (IOException e) {
-            log.error("Failed to process sensor event", e);
-            // Depending on the use case, you might want to throw an exception, nack the message, send to a dead letter topic, etc.
-        }
+            log.error("Failed to process sensor event", e);}
     }
 }

@@ -1,49 +1,55 @@
 version: '3.8'
+
 services:
   sensorsapi:
-    build: ./sensorsapi
+    build:
+      context: .
+      dockerfile: sensorsapi/Dockerfile
     ports:
       - "8090:8090"
     environment:
       SPRING_KAFKA_BOOTSTRAP-SERVERS: kafka:9092
-      SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/sensor_db
-    depends_on:
-      - kafka
-      - mongo
+      SPRING_DATA_MONGODB_URI: mongodb://mongo/sensor_db
 
   sensorconsumer:
-    build: ./sensorconsumer
-    ports:
-      - "8081:8081"
+    build:
+      context: .
+      dockerfile: sensorconsumer/Dockerfile
     environment:
       SPRING_KAFKA_BOOTSTRAP-SERVERS: kafka:9092
-      SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/sensor_db
+      SPRING_DATA_MONGODB_URI: mongodb://mongo/sensor_db
     depends_on:
       - kafka
       - mongo
 
   kafka:
-    image: 'bitnami/kafka:latest'
+    image: confluentinc/cp-kafka:latest
     ports:
-      - '9092:9092'
+      - "9092:9092"
     environment:
-      - KAFKA_BROKER_ID=1
-      - KAFKA_LISTENERS=PLAINTEXT://:9092
-      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
-      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: LISTENER_DOCKER_INTERNAL://kafka:29092,LISTENER_DOCKER_EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_DOCKER_INTERNAL:PLAINTEXT,LISTENER_DOCKER_EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER_INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     depends_on:
       - zookeeper
 
   zookeeper:
-    image: 'bitnami/zookeeper:latest'
+    image: confluentinc/cp-zookeeper:latest
     ports:
-      - '2181:2181'
+      - "2181:2181"
     environment:
-      - ALLOW_ANONYMOUS_LOGIN=yes
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
 
   mongo:
-    image: 'mongo:latest'
+    image: mongo:latest
     ports:
-      - '27017:27017'
-    environment:
-      - MONGO_INITDB_DATABASE=sensor_db
+      - "27017:27017"
+    volumes:
+      - mongodb_data_container:/data/db
+
+volumes:
+  mongodb_data_container:
