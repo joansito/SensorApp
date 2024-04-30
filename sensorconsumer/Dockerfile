@@ -31,5 +31,5 @@ WORKDIR /app
 # Set the command to run when the container starts
 ENTRYPOINT ["java", "-jar", "sensorconsumer.jar"]
 
-# Expose port 8081 for the application to listen on
-EXPOSE 8081
+# Expose port 8082 for the application to listen on
+EXPOSE 8082

@@ -9,7 +9,11 @@ services:
       - "8090:8090"
     environment:
       SPRING_KAFKA_BOOTSTRAP-SERVERS: kafka:9092
-      SPRING_DATA_MONGODB_URI: mongodb://mongo/sensor_db
+      SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/sensor_db
+    depends_on:
+      - kafka
+      - mongo
+      - kafka-init
     networks:
       - app-network
 
@@ -18,14 +22,15 @@ services:
       context: .
       dockerfile: sensorconsumer/Dockerfile
     ports:
-      - "8081:8081"
+      - "8082:8082"
     environment:
       SPRING_KAFKA_BOOTSTRAP-SERVERS: kafka:9092
-      SPRING_DATA_MONGODB_URI: mongodb://mongo/sensor_db
+      SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/sensor_db
     depends_on:
       - kafka
       - mongo
       - sensorsapi
+      - kafka-init
     networks:
       - app-network
 
@@ -75,6 +80,19 @@ services:
       - "27017:27017"
     volumes:
       - mongodb_data_container:/data/db
+    networks:
+      - app-network
+
+  mongo-express:
+    image: mongo-express:latest
+    restart: unless-stopped
+    environment:
+      ME_CONFIG_MONGODB_PORT: '27017'
+      ME_CONFIG_MONGODB_SERVER: mongo
+    depends_on:
+      - mongo
+    ports:
+      - '8081:8081'
     networks:
       - app-network
 
