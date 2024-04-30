@@ -11,6 +11,16 @@ The application is split into two primary services:
 
 Both microservices are intended to work in tandem to efficiently handle the lifecycle of sensor event data.
 
+## Database Design and Data Flow
+
+The `SensorApp` utilizes MongoDB to store and process sensor event data through two primary collections within the `sensor_db` database:
+
+- **sensor_events**: This collection is used by the `sensorsapi` service to store sensor event data as it is received. Each POST request to `/api/sensor-events` results in data being saved here, ensuring all raw sensor event data is captured.
+
+- **processed_sensor_events**: After sensor events are stored, the `sensorconsumer` service consumes these events from a Kafka topic, processes them, and then saves the processed data into this collection. 
+
+This setup ensures a clear separation of concerns where raw data collection and data processing are handled independently, promoting scalability and maintainability of the system.
+
 ## Setup and Running
 
 ### Prerequisites
