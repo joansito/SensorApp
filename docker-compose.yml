@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  sensorsapi:
+    build:
+      context: .
+      dockerfile: sensorsapi/Dockerfile
+    ports:
+      - "8090:8090"
+    environment:
+      SPRING_KAFKA_BOOTSTRAP-SERVERS: kafka:9092
+      SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/sensor_db
+    depends_on:
+      - kafka
+      - mongo
+      - kafka-init
+    networks:
+      - app-network
+
+  sensorconsumer:
+    build:
+      context: .
+      dockerfile: sensorconsumer/Dockerfile
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_KAFKA_BOOTSTRAP-SERVERS: kafka:9092
+      SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/sensor_db
+    depends_on:
+      - kafka
+      - mongo
+      - sensorsapi
+      - kafka-init
+    networks:
+      - app-network
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: LISTENER_DOCKER_INTERNAL://kafka:29092, LISTENER_DOCKER_EXTERNAL://${DOCKER_HOST_IP:-host.docker.internal}:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_DOCKER_INTERNAL:PLAINTEXT, LISTENER_DOCKER_EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER_INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      - zookeeper
+    networks:
+      - app-network
+
+  kafka-init:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - kafka
+    command: >
+      sh -c "
+        echo Waiting for Kafka to be ready...
+        cub kafka-ready -b kafka:9092 1 30 &&
+        kafka-topics --create --topic sensor_events --partitions 1 --replication-factor 1 --if-not-exists --bootstrap-server kafka:9092
+        echo Topic 'sensor_events' created
+      "
+    networks:
+      - app-network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - app-network
+
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data_container:/data/db
+    networks:
+      - app-network
+
+  mongo-express:
+    image: mongo-express:latest
+    restart: unless-stopped
+    environment:
+      ME_CONFIG_MONGODB_PORT: '27017'
+      ME_CONFIG_MONGODB_SERVER: mongo
+    depends_on:
+      - mongo
+    ports:
+      - '8081:8081'
+    networks:
+      - app-network
+
+volumes:
+  mongodb_data_container:
+
+networks:
+  app-network:
+    driver: bridge

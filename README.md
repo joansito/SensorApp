@@ -21,6 +21,7 @@ The `SensorApp` utilizes MongoDB to store and process sensor event data through 
 
 This setup ensures a clear separation of concerns where raw data collection and data processing are handled independently, promoting scalability and maintainability of the system.
 
+
 ## Setup and Running
 
 ### Prerequisites
@@ -109,3 +110,4 @@ The `SensorApp` is currently functional but has several areas identified for imp
 Contributions and suggestions on these tasks are welcome and appreciated.
 
 #### Designed with love by Joansito.
+
